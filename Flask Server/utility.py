@@ -1,7 +1,7 @@
 import pickle
 import json
 import numpy as np
-
+import os
 __locations = None
 __data_columns = None
 __model = None
@@ -23,20 +23,33 @@ def get_estimated_price(location,sqft,bhk,bath):
 
 
 def load_saved_artifacts():
-    print("loading saved artifacts...start")
-    global  __data_columns
-    global __locations
+    print("Loading saved artifacts...start")
+    global __data_columns, __locations, __model
 
-    with open("./Artifacts/columns.json", "r") as f:
-        __data_columns = json.load(f)['data_columns']
-        __locations = __data_columns[3:]  # first 3 columns are sqft, bath, bhk
+    # Define paths
+    columns_path = os.path.join(os.path.dirname(__file__), "Artifacts", "columns.json")
+    model_path = os.path.join(os.path.dirname(__file__), "Artifacts", "banglore_home_prices_model.pickle")
 
-    global __model
-    if __model is None:
-        with open('./Artifacts/banglore_home_prices_model.pickle', 'rb') as f:
+    # Check loading JSON
+    try:
+        with open(columns_path, "r") as f:
+            __data_columns = json.load(f)['data_columns']
+            __locations = __data_columns[3:]  # first 3 columns are sqft, bath, bhk
+        print("Data columns loaded successfully")
+    except Exception as e:
+        print(f"Error loading columns.json: {e}")
+        return
+
+    # Check loading model
+    try:
+        with open(model_path, 'rb') as f:
             __model = pickle.load(f)
-    print("loading saved artifacts...done")
+        print("Model loaded successfully")
+    except Exception as e:
+        print(f"Error loading model pickle file: {e}")
+        return
 
+    print("Loading saved artifacts...done")
 def get_location_names():
     return __locations
 
@@ -45,8 +58,5 @@ def get_data_columns():
 
 if __name__ == '__main__':
     load_saved_artifacts()
-    print(get_location_names())
-    print(get_estimated_price('1st Phase JP Nagar',1000, 3, 3))
-    print(get_estimated_price('1st Phase JP Nagar', 1000, 2, 2))
-    print(get_estimated_price('Kalhalli', 1000, 2, 2)) # other location
-    print(get_estimated_price('Ejipura', 1000, 2, 2))  # other location
+    print("Locations:", get_location_names())
+    print("Sample prediction:", get_estimated_price('1st Phase JP Nagar', 1000, 3, 3))
